@@ -1,78 +1,102 @@
 import requests
-import random
+import threading
 import time
-from colorama import Fore, Style
+import random
+from colorama import Fore, Style, init
 
-# Function to display messages in colors
-def colored_message(message, color):
-    colors = {
-        "green": Fore.GREEN,
-        "red": Fore.RED,
-        "blue": Fore.BLUE,
-        "yellow": Fore.YELLOW,
-        "magenta": Fore.MAGENTA
-    }
-    print(colors.get(color, Fore.WHITE) + message + Style.RESET_ALL)
+init(autoreset=True)
 
-# Function to send message
-def send_message(webhook_url, message):
-    payload = {
-        "content": message
+banner = f"""{Fore.RED}
+██████╗ ██╗███████╗ █████╗  █████╗ ██████╗ 
+██╔══██╗██║██╔════╝██╔══██╗██╔══██╗██╔══██╗
+{Fore.WHITE}██████╔╝██║█████╗  ███████║███████║██║  ██║
+██╔═══╝ ██║██╔══╝  ██╔══██║██╔══██║██║  ██║
+{Fore.GREEN}██║     ██║███████╗██║  ██║██║  ██║██████╔╝
+╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ 
+{Style.BRIGHT}{Fore.YELLOW}        BY HAKER ARNOUB
+"""
+
+def send_message(webhook_url, content):
+    data = {"content": content}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": random.choice([
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Mozilla/5.0 (Linux; Android 10; Mobile)",
+            "DiscordBot (https://github.com/discord)"
+        ])
     }
     try:
-        response = requests.post(webhook_url, json=payload)
+        response = requests.post(webhook_url, json=data, headers=headers)
         if response.status_code == 204:
-            colored_message(f"[+] Message sent: {message}", "green")
+            print(Fore.GREEN + f"[+] Sent: {content}")
         else:
-            colored_message(f"[-] Failed to send message!", "red")
-    except requests.exceptions.RequestException as e:
-        colored_message(f"[-] Error occurred: {e}", "red")
+            print(Fore.RED + f"[-] Failed: {response.status_code}")
+    except Exception as e:
+        print(Fore.RED + f"[!] Error: {e}")
 
-# Function for random messages
-def random_message():
-    messages = [    "الهاكر التونسي @everyone @here @everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@everyone @here تم اختراق السرفر@e تم اختراق السرفر",
-    "@everyone @here تم اختراق السرفر عصب ",
-    "هل تتحمل النظام؟ @everyone @here تم اختراق السرفر",
-    "رسالة عشوائية للاختراق @everyone @here تم اختراق السرفر",
-    " @everyone @here تم اختراق السرفر!",
-    "@everyone @here تم اختراق السرفر",
-    "هل يوجد حماية هنا؟ @everyone @here تم اختراق السرفر",
-    "رسالة من البوت @everyone @here تم اختراق السرفر",
-    "مفاجأة!",
-    "عشوائي جداً @everyone @here تم اختراق السرفر!""Hello!", "How are you?", "Welcome to the server!", "Sent from the tool!"]
-    return random.choice(messages)
+def spam_loop(webhook_url, messages, count, delay):
+    def thread_func():
+        for _ in range(count):
+            content = random.choice(messages)
+            send_message(webhook_url, content)
+            time.sleep(random.uniform(delay - 0.2, delay + 0.2))
 
-# Function to start spamming
-def start_spamming(webhook_url, num_threads, message_type):
-    colored_message(f"[*] Starting to send messages to {webhook_url}", "blue")
-    
-    for _ in range(num_threads):
-        if message_type == 1:
-            message = random_message()
-        else:
-            message = "Fixed message from the tool"
-        
-        send_message(webhook_url, message)
-        time.sleep(1)  # Slight delay between messages to avoid getting blocked
+    threads = []
+    for _ in range(5):  # عدد الـ Threads
+        t = threading.Thread(target=thread_func)
+        t.start()
+        threads.append(t)
 
-# User Interface
+    for t in threads:
+        t.join()
+
 def main():
-    print(Fore.CYAN + "===================================")
-    print(Fore.CYAN + "      Discord Spammer Tool         ")
-    print(Fore.CYAN + "        By haker arnoub            ")
-    print(Fore.CYAN + "===================================")
+    print(banner)
+    webhook_url = input(Fore.CYAN + "[1] Enter Webhook URL: ")
 
-    webhook_url = input(Fore.YELLOW + "[1] Enter your Webhook URL: ")
     try:
-        num_threads = int(input(Fore.YELLOW + "[2] Enter number of messages: "))
-        message_type = int(input(Fore.YELLOW + "[3] Choose message type:\n    [1] Random\n    [2] Fixed\nChoose (1 or 2): "))
-        if message_type not in [1, 2]:
-            raise ValueError("Invalid selection!")
-    except ValueError as e:
-        colored_message(f"[-] Error: {e}", "red")
+        total = int(input(Fore.CYAN + "[2] Number of messages to send: "))
+    except:
+        print(Fore.RED + "[-] Invalid number!")
         return
 
-    start_spamming(webhook_url, num_threads, message_type)
+    try:
+        delay = float(input(Fore.CYAN + "[3] Base delay between messages (e.g. 0.5): "))
+    except:
+        delay = 0.5
+
+    print(Fore.CYAN + "[4] Message type:")
+    print("    [1] Random messages")
+    print("    [2] Static message")
+    print("    [3] Custom input messages")
+    msg_type = input("[?] Choose 1/2/3: ")
+
+    messages = []
+    if msg_type == '1':
+        messages = [
+            "This is a powerful test!",
+            "Boosted Spammer Active!",
+            "Haker Arnoub was here.",
+            "Watch your server lag!",
+            "You can't stop this bot!",
+            "Auto-messages loaded!"
+        ]
+    elif msg_type == '2':
+        msg = input("Enter your static message: ")
+        messages = [msg]
+    elif msg_type == '3':
+        print("Enter custom messages (type 'done' to finish):")
+        while True:
+            line = input("- ")
+            if line.lower() == 'done':
+                break
+            messages.append(line)
+    else:
+        print(Fore.RED + "[-] Invalid choice!")
+        return
+
+    spam_loop(webhook_url, messages, total, delay)
 
 if __name__ == "__main__":
     main()
